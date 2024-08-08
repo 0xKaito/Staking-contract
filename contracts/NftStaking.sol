@@ -25,7 +25,6 @@ contract NftStaking is
     mapping(address => NFTPoolInfo) public poolInfo;
     mapping(address => mapping(uint256 => TokenInfo)) public tokenInfo;
     mapping(address => mapping(uint256 => EpochInfo)) public epochInfo;
-    mapping(uint256 => address) public tokenOwner;
 
     function initialize(address _admin, address _REWARDTOKEN) public override initializer {
         __Ownable_init(_admin);
@@ -195,9 +194,11 @@ contract NftStaking is
         view
         returns (uint256 accumulatedRewards)
     {
-        for (uint256 i = _epoch + 1; i <= _currentEpoch; ++i) {
-            EpochInfo memory _epochInfo = epochInfo[_pool][i];
-            accumulatedRewards += (_epochInfo.lastUpdateBlock - _depositedAt) * _epochInfo.rewardPerBlock;
+        for (uint256 i = _epoch; i <= _currentEpoch; ++i) {
+            uint256 _rewardPerBlock = epochInfo[_pool][i].rewardPerBlock;
+            uint256 _nextLastUpdateBlock = i == _currentEpoch ? block.number : epochInfo[_pool][i+1].lastUpdateBlock;
+            uint256 _LastUpdateBlock = i == _epoch ? _depositedAt : epochInfo[_pool][i].lastUpdateBlock;
+            accumulatedRewards += (_nextLastUpdateBlock -_LastUpdateBlock) * _rewardPerBlock;
         }
     }
 
